@@ -6,6 +6,7 @@
     "csurf": "^1.11.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-brute": "^1.0.1",
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
@@ -13,8 +14,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }, 
-
+  },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js"
