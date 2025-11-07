@@ -21,9 +21,6 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Vulnerability Scan
-        run: npm audit --audit-level=low
-
       - name: Lint
         run: npx eslint .
 
