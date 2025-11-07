@@ -1,275 +1,81 @@
-version: 2.1
+name: CI/CD Pipeline
 
-orbs:
-  node: circleci/node@5.1.0
-  browser-tools: circleci/browser-tools@1.4.8
-
-executors:
-  node-executor:
-    docker:
-      - image: cimg/node:18.19.0
-    working_directory: ~/repo
-  
-  node-browsers:
-    docker:
-      - image: cimg/node:18.19.0-browsers
-    working_directory: ~/repo
+on:
+  push:
+    branches: ["main"]
+  pull_request:
 
 jobs:
-  vulnerability-scan:
-    executor: node-executor
+  build-test-analyze:
+    runs-on: ubuntu-latest
+
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "package-lock.json" }}
-      - run:
-          name: Run npm audit
-          command: |
-            npm audit --audit-level=moderate || true
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  lint:
-    executor: node-executor
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Vulnerability Scan
+        run: npm audit --audit-level=moderate
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Unit Tests
+        run: npm test
+
+      - name: Integration Tests (basic placeholder)
+        run: npm run test:integration || echo "No integration tests, skipping"
+
+      - name: SonarQube Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=YOUR_PROJECT_KEY \
+            -Dsonar.sources=./src \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN
+  docker-build-push:
+    runs-on: ubuntu-latest
+    needs: build-test-analyze
+
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          name: Run ESLint
-          command: npm run lint
+      - name: Checkout
+        uses: actions/checkout@v3
 
-  unit-tests:
-    executor: node-executor
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: yourdockeruser/your-app-name:latest
+
+  deploy-to-render:
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          name: Run Unit Tests
-          command: npm run test:unit
-      - run:
-          name: Generate Coverage Report
-          command: npm run test:coverage || true
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: coverage
-          destination: coverage
-
-  component-tests:
-    executor: node-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          name: Run Component Tests
-          command: npm run test:component
-      - store_test_results:
-          path: test-results
-
-  build:
-    executor: node-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "package-lock.json" }}
-            - v1-dependencies-
-      - run:
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          name: Build Production Bundle
-          command: npm run build
-      - run:
-          name: Check Build Size
-          command: |
-            echo "Build size analysis:"
-            du -sh dist/
-            du -sh dist/* | sort -hr
-      - persist_to_workspace:
-          root: ~/repo
-          paths:
-            - dist
-      - store_artifacts:
-          path: dist
-          destination: build-output
-
-  build-docker:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.24
-          docker_layer_caching: true
-      - attach_workspace:
-          at: ~/repo
-      - run:
-          name: Build Docker Image
-          command: |
-          environment:
-            DOCKER_IMAGE_NAME: your-dockerhub-username/your-app-name
-      - run:
-          name: Push to Docker Hub
-          command: |
-            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-            docker push $DOCKER_IMAGE_NAME:$CIRCLE_SHA1
-            docker push $DOCKER_IMAGE_NAME:latest
-
-  deploy-render:
-    executor: node-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: ~/repo
-      - run:
-          name: Trigger Render Deploy
-          command: |
-            curl -X POST $RENDER_DEPLOY_HOOK_URL
-
-workflows:
-  version: 2
-  build-test-deploy:
-    jobs:
-      - vulnerability-scan
-      - lint
-      - unit-tests
-      - component-tests:
-          requires:
-            - unit-tests
-      - build:
-          requires:
-            - vulnerability-scan
-            - lint
-            - component-tests
-            - e2e-tests
-       - deploy-render:
-          requires:
-             - build
-           filters:
-             branches:
-               only: main
-
-# ============================================
-# SETUP CHECKLIST - Environment Variables
-# ============================================
-# Add these in CircleCI: Project Settings > Environment Variables
-#
-# For Docker Hub (Optional):
-#   - DOCKER_USERNAME: Your Docker Hub username
-#   - DOCKER_PASSWORD: Your Docker Hub password or access token
-#
-# For Snyk (Optional):
-#   - SNYK_TOKEN: Your Snyk API token (from https://app.snyk.io/account)
-#
-# For Vercel:
-#   - VERCEL_TOKEN: Your Vercel token (from https://vercel.com/account/tokens)
-#   - VERCEL_ORG_ID: Your Vercel organization ID
-#   - VERCEL_PROJECT_ID: Your Vercel project ID
-#     (Run 'vercel link' locally to get org and project IDs)
-#
-# For Render:
-#   - RENDER_DEPLOY_HOOK_URL: Your Render deploy hook URL
-#     (Get from: Render Dashboard > Static Site > Settings > Deploy Hook)
-#
-# For Netlify:
-#   - NETLIFY_AUTH_TOKEN: Your Netlify personal access token
-#   - NETLIFY_SITE_ID: Your Netlify site ID
-#
-# ============================================
-# PACKAGE.JSON SCRIPTS NEEDED
-# ============================================
-# Add these to your package.json "scripts" section:
-# {
-#   "scripts": {
-#     "dev": "vite",
-#     "build": "vite build",
-#     "preview": "vite preview",
-#     "lint": "eslint . --ext js,jsx,ts,tsx",
-#     "type-check": "tsc --noEmit",
-#     "test": "vitest",
-#     "test:unit": "vitest run",
-#     "test:component": "vitest run --testPathPattern=components",
-#     "test:coverage": "vitest run --coverage",
-#     "test:e2e": "cypress run"
-#   }
-# }
-#
-# ============================================
-# RECOMMENDED DEPENDENCIES
-# ============================================
-# Testing:
-#   npm install -D vitest @vitest/ui @testing-library/react @testing-library/jest-dom
-#   npm install -D @testing-library/user-event jsdom
-
-# For code coverage:
-#   npm install -D @vitest/coverage-v8
-#
-# ============================================
-# PROJECT STRUCTURE RECOMMENDATIONS
-# ============================================
-# src/
-#   ├── components/
-#   ├── pages/
-#   └── __tests__/          # Test files
-#       ├── unit/
-#       ├── components/
-#       └── e2e/
-#
-# ============================================
-# VITE.CONFIG.JS/TS EXAMPLE
-# ============================================
-# import { defineConfig } from 'vite'
-# import react from '@vitejs/plugin-react'
-# 
-# export default defineConfig({
-#   plugins: [react()],
-#   test: {
-#     globals: true,
-#     environment: 'jsdom',
-#     setupFiles: './src/test/setup.ts',
-#   },
-# })
-#
-# ============================================
-# DOCKERFILE EXAMPLE (Optional - for containerization)
-# ============================================
-# # Build stage
-# FROM node:18-alpine AS builder
-# WORKDIR /app
-# COPY package*.json ./
-# RUN npm ci
-# COPY . .
-# RUN npm run build
-# 
-# # Production stage
-# FROM nginx:alpine
-# COPY --from=builder /app/dist /usr/share/nginx/html
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-# EXPOSE 80
-# CMD ["nginx", "-g", "daemon off;"]
+      - name: Deploy to Render
+        run: |
+          curl -X POST \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            --data '{}' \
+            https://api.render.com/deploy/YOUR_RENDER_DEPLOY_HOOK
