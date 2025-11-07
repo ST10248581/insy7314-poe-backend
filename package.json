@@ -3,7 +3,7 @@
     "@supabase/supabase-js": "^2.74.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
-    "csurf": "^1.11.0",
+    "csurf": "^1.2.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "jest": "^30.2.0",
-    "newman": "^6.2.1",
+    "newman": "^6.2.0",
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4"
   },
