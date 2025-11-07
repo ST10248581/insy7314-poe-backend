@@ -1,0 +1,195 @@
+{
+	"info": {
+		"_postman_id": "f2ed77e1-a739-480e-96ea-63c18d5fdb2a",
+		"name": "EmployeeAPI",
+		"description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48827847",
+		"_collection_link": "https://alwandengcobo3-9653627.postman.co/workspace/Alwande-Ngcobo's-Workspace~0eb29466-2232-4bd7-824c-b4a425a4da36/collection/48827847-f2ed77e1-a739-480e-96ea-63c18d5fdb2a?action=share&source=collection_link&creator=48827847"
+	},
+	"item": [
+		{
+			"name": "Login Employee",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let jsonData = pm.response.json();\r",
+							"if(jsonData.tempToken){\r",
+							"    pm.environment.set(\"tempToken\", jsonData.tempToken);\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"{{Username}}\",\r\n  \"password\": \"{{Password}}\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5000/api/employee/employee-login",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"employee",
+						"employee-login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Verify MFA",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let jsonData = pm.response.json();",
+							"if(jsonData.accessToken){",
+							"    pm.environment.set(\"accessToken\", jsonData.accessToken);",
+							"    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjA1NTc3MjZmYWIxMjMxZmEyZGNjNTcyMWExMDgzZGE2ODBjNGE3M2YiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vcHJvZzczMTRpY2V0YXNrNSIsImF1ZCI6InByb2c3MzE0aWNldGFzazUiLCJhdXRoX3RpbWUiOjE3NTg5MjQxNDIsInVzZXJfaWQiOiJtWUtSSkFoV1BXYW9YUTZONXJpM1VlWW5kREEzIiwic3ViIjoibVlLUkpBaFdQV2FvWFE2TjVyaTNVZVluZERBMyIsImlhdCI6MTc1ODkyNDE0MywiZXhwIjoxNzU4OTI3NzQzLCJlbWFpbCI6ImphbWVzQGVtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJqYW1lc0BlbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.Z1gaBaaefouOD3u5Oc1fi0yMa8_2R2cJ6KIt0l9raQQtpGGwtg9G6UGL1Fw_C0ebdJqo9ytqbioVZvac9INwQgFGSB2Hk0hNIJH8q0Tft6rzD__EqMkTEKBM_o6reaBd1LR7DjAZTQKlPo9_QS0nRpiRvIG1cGpee7AjaqY8r7-6fj6KgIISFb-mhDy8RYUganmr4urh9LWaS36YdPGqRdQBAVh_yE1C64rijI8VaDAoeRrdFsxaLlWwYOD5mEmazBcgG8IIey0ovIPD57xeXqn3R-L2wzXXA15bF7NoOl8tlNaCTuD2315EeulDWvuacUIryhP9uFMW08X6keFhPA",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"{{Username}}\",\r\n  \"code\": \"361069\",\r\n  \"tempToken\": \"{{tempToken}}\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5000/api/employee/verify-employeemfa",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"employee",
+						"verify-employeemfa"
+					]
+				},
+				"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+			},
+			"response": []
+		},
+		{
+			"name": "Generate MFA",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Successful POST request\", function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"johndoe\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5000/api/employee/generate-employeemfa",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"employee",
+						"generate-employeemfa"
+					]
+				},
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "Add Employee",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"fullName\": \"Alice Smith\",\r\n  \"username\": \"alicesmith\",\r\n  \"password\": \"Alice@12\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5000/api/employee/add-employee",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"employee",
+						"add-employee"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

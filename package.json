@@ -6,17 +6,26 @@
     "csurf": "^1.11.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "express-brute": "^1.0.1",
     "express-rate-limit": "^8.1.0",
+    "express-slow-down": "^3.0.0",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
-    "validator": "^13.15.15"
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
+    "validator": "^13.15.15",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^30.2.0",
+    "newman": "^6.2.1",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   },
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "jest --detectOpenHandles --forceExit"
   }
 }
